@@ -1,0 +1,14 @@
+BasedOnStyle: Google
+IndentWidth: 4
+AccessModifierOffset: -4
+Language: Cpp
+Standard: Auto
+
+IncludeBlocks: Preserve
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+

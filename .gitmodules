@@ -1,0 +1,9 @@
+[submodule "vendor/pigpio"]
+	path = vendor/pigpio
+	url = https://github.com/joan2937/pigpio
+[submodule "vendor/fmt"]
+	path = vendor/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "vendor/spdlog"]
+	path = vendor/spdlog
+	url = https://github.com/gabime/spdlog

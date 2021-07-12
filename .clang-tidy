@@ -1,0 +1,30 @@
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-special-member-functions,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  google-*,
+  -google-default-arguments,
+  -google-runtime-references,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  modernize-*,
+  -modernize-use-noexcept,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  -performance-noexcept-move-constructor,
+  readability-*,
+  -readability-function-cognitive-complexity,
+  -readability-magic-numbers,
+  -readability-non-const-parameter,
+  -readability-uppercase-literal-suffix,
+
+HeaderFilterRegex: '*.hpp$'
+WarningsAsErrors: '*'
+
