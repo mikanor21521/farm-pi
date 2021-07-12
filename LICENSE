@@ -19,3 +19,23 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+The externally maintained libraries used by Observer are:
+
+ - spdlog
+    Located at vendor/spdlog
+    Copyright (c) 2016 Gabi Melman.
+    licensed as follows:
+    https://github.com/gabime/spdlog/blob/v1.8.5/LICENSE
+
+ - fmt lib
+    Located at vendor/fmt
+    Copyright (c) 2012 - present, Victor Zverovich.
+    licensed as follows:
+    https://github.com/fmtlib/fmt/blob/7.1.3/LICENSE.rst
+
+ - pigpio
+    Located at vendor/pigpio
+    licensed as follows:
+    https://github.com/joan2937/pigpio/blob/v79/UNLICENCE
+
