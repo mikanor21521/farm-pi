@@ -111,7 +111,8 @@ level gpio::get_level() const {
             logger->error("gpio read failed. level not 0-1. level: {}", ret);
             throw driver_ex("gpio read failed. level not 0-1.");
     }
-    logger->debug("gpio read done. level: {}", static_cast<std::uint8_t>(level_));
+    logger->debug("gpio read done. level: {}",
+                  static_cast<std::uint8_t>(level_));
     return level_;
 }
 

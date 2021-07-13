@@ -1,9 +1,11 @@
+#include <bitset>
 #include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "pigpio/pigpio.h"
 #include "spdlog/sinks/daily_file_sink.h"
@@ -12,6 +14,7 @@
 
 #include "driver/driver.hpp"
 #include "driver/gpio.hpp"
+#include "driver/spi.hpp"
 
 int main() {
     std::string logger_name = "albireo-pi";
@@ -54,6 +57,18 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     gpio.finalize();
+    const std::uint8_t spi_slave = 0;
+    const std::uint32_t spi_clock = 100000;
+    const std::uint8_t spi_mode = 0;
+    const driver::spi::active_high spi_active_high =
+        driver::spi::active_high::disable;
+    driver::spi::spi spi(spi_slave, spi_clock, spi_mode, spi_active_high);
+    spi.initialize();
+    std::vector<std::bitset<8>> conf = {0x68, 0x00};
+    auto data = spi.transfer(conf);
+    std::uint16_t volt = data.at(0).to_ulong() << 8 | data.at(1).to_ulong();
+    logger->info("volt: {}", volt);
+    spi.finalize();
     driver::finalize();
     spdlog::drop_all();
     return 0;
