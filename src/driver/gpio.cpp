@@ -9,7 +9,7 @@
 
 namespace driver::gpio {
 
-gpio::gpio(uint8_t gpio_num, mode gpio_mode) {
+gpio::gpio(std::uint8_t gpio_num, mode gpio_mode) {
     logger = spdlog::get(logger_name);
     if (!logger) {
         std::cerr << "logger get failed." << std::endl;
@@ -21,7 +21,7 @@ gpio::gpio(uint8_t gpio_num, mode gpio_mode) {
         throw driver_ex("gpio initialisation failed. gpio not 0-53.");
     }
     num_ = gpio_num;
-    logger->trace("gpio mode: {}", static_cast<uint8_t>(gpio_mode));
+    logger->trace("gpio mode: {}", static_cast<std::uint8_t>(gpio_mode));
     if (gpio_mode != mode::input && gpio_mode != mode::output) {
         logger->error("gpio initialization failed. mode not 0-1.");
         throw driver_ex("gpio initialisation failed. mode not 0-1.");
@@ -31,7 +31,7 @@ gpio::gpio(uint8_t gpio_num, mode gpio_mode) {
 
 void gpio::initialize() const {
     logger->debug("gpio initialization start.");
-    int16_t ret = 0;
+    std::int16_t ret = 0;
     switch (mode_) {
         case mode::input:
             ret = gpioSetMode(num_, PI_INPUT);
@@ -49,7 +49,7 @@ void gpio::initialize() const {
 
 void gpio::finalize() const {
     logger->debug("gpio finalization start.");
-    int16_t ret = 0;
+    std::int16_t ret = 0;
     if (mode_ == mode::output) {
         ret = gpioWrite(num_, PI_LOW);
         if (ret < 0) {
@@ -67,7 +67,7 @@ void gpio::finalize() const {
 
 void gpio::set_level(level gpio_level) const {
     logger->debug("gpio write start.");
-    int16_t ret = 0;
+    std::int16_t ret = 0;
     if (mode_ == mode::input) {
         logger->error("gpio write failed. mode not output.");
         throw driver_ex("gpio write failed. mode not output.");
@@ -88,12 +88,12 @@ void gpio::set_level(level gpio_level) const {
         throw driver_ex("gpio write failed.", ret);
     }
     logger->debug("gpio write done. level: {}",
-                  static_cast<uint8_t>(gpio_level));
+                  static_cast<std::uint8_t>(gpio_level));
 }
 
 level gpio::get_level() const {
     logger->debug("gpio read start.");
-    int16_t ret = 0;
+    std::int16_t ret = 0;
     ret = gpioRead(num_);
     if (ret < 0) {
         logger->error("gpio read failed. status code: {}", ret);
@@ -111,7 +111,7 @@ level gpio::get_level() const {
             logger->error("gpio read failed. level not 0-1. level: {}", ret);
             throw driver_ex("gpio read failed. level not 0-1.");
     }
-    logger->debug("gpio read done. level: {}", static_cast<uint8_t>(level_));
+    logger->debug("gpio read done. level: {}", static_cast<std::uint8_t>(level_));
     return level_;
 }
 

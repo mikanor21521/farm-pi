@@ -16,7 +16,7 @@ void finalize();
 class driver_ex : public std::exception {
 public:
     explicit driver_ex(std::string msg);
-    driver_ex(const std::string& msg, int16_t error_num);
+    driver_ex(const std::string& msg, std::int16_t error_num);
     [[nodiscard]] const char* what() const noexcept override;
 
 private:

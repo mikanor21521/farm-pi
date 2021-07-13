@@ -8,19 +8,19 @@
 
 namespace driver::gpio {
 
-enum class mode : uint8_t {
+enum class mode : std::uint8_t {
     input = 0x00,
     output = 0x01,
 };
 
-enum class level : uint8_t {
+enum class level : std::uint8_t {
     low = 0x00,
     high = 0x01,
 };
 
 class gpio final {
 public:
-    gpio(uint8_t num, mode gpio_mode);
+    gpio(std::uint8_t num, mode gpio_mode);
     virtual ~gpio() noexcept = default;
     void initialize() const;
     void finalize() const;
@@ -29,7 +29,7 @@ public:
 
 private:
     std::shared_ptr<spdlog::logger> logger;
-    uint8_t num_;
+    std::uint8_t num_;
     mode mode_;
 };
 

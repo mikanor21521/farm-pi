@@ -42,7 +42,7 @@ void initialize(const std::string& file_name) {
                         std::string(ex.what()));
     }
     // initializing pigpio
-    int16_t ret = 0;
+    std::int16_t ret = 0;
     ret = gpioInitialise();
     if (ret < 0) {
         spdlog::get(logger_name)
@@ -61,7 +61,7 @@ void finalize() {
 
 driver_ex::driver_ex(std::string msg) : msg_(std::move(msg)) {}
 
-driver_ex::driver_ex(const std::string& msg, int16_t error_num)
+driver_ex::driver_ex(const std::string& msg, std::int16_t error_num)
     : msg_(msg + " status code: " + std::to_string(error_num)) {}
 
 const char* driver_ex::what() const noexcept {
