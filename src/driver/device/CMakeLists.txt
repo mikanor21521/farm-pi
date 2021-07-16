@@ -1,0 +1,5 @@
+add_library(mcp3002)
+add_library(device::mcp3002 ALIAS mcp3002)
+target_sources(mcp3002 PRIVATE mcp3002.cpp)
+target_include_directories(mcp3002 PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(mcp3002 PUBLIC driver spdlog)

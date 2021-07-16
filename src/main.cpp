@@ -8,14 +8,15 @@
 #include <thread>
 #include <vector>
 
-#include "driver/i2c.hpp"
 #include "pigpio/pigpio.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
+#include "driver/device/mcp3002.hpp"
 #include "driver/driver.hpp"
 #include "driver/gpio.hpp"
+#include "driver/i2c.hpp"
 #include "driver/spi.hpp"
 
 int main() {
@@ -64,13 +65,15 @@ int main() {
     const std::uint8_t spi_mode = 0;
     const driver::spi::active_high spi_active_high =
         driver::spi::active_high::disable;
+    const double mcp3002_vase_voltage = 3.3;
     driver::spi::spi spi(spi_slave, spi_clock, spi_mode, spi_active_high);
-    spi.initialize();
-    std::vector<std::bitset<8>> conf = {0x68, 0x00};
-    auto data = spi.transfer(conf);
-    std::uint16_t volt = data.at(0).to_ulong() << 8 | data.at(1).to_ulong();
-    logger->info("volt: {}", volt);
-    spi.finalize();
+    driver::device::mcp3002::mcp3002 mcp3002(spi, mcp3002_vase_voltage);
+    mcp3002.initialize();
+    double voltage =
+        mcp3002.read_voltage(driver::device::mcp3002::channel::single_0);
+    logger->info("mcp3002 voltage: {}", voltage);
+    mcp3002.finalize();
+    // tsl2561 code
     std::uint8_t i2c_bus = 1;
     std::uint8_t i2c_addr = 0x39;
     driver::i2c::i2c i2c(i2c_bus, i2c_addr);
