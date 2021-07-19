@@ -13,6 +13,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
+#include "driver/device/bme280.hpp"
 #include "driver/device/mcp3002.hpp"
 #include "driver/driver.hpp"
 #include "driver/gpio.hpp"
@@ -60,19 +61,52 @@ int main() {
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     gpio.finalize();
-    const std::uint8_t spi_slave = 0;
-    const std::uint32_t spi_clock = 100000;
-    const std::uint8_t spi_mode = 0;
-    const driver::spi::active_high spi_active_high =
+    // mcp3002
+    const std::uint8_t mcp3002_spi_slave = 0;
+    const std::uint32_t mcp3002_spi_clock = 100000;
+    const std::uint8_t mcp3002_spi_mode = 0;
+    const driver::spi::active_high mcp3002_spi_active_high =
         driver::spi::active_high::disable;
     const double mcp3002_vase_voltage = 3.3;
-    driver::spi::spi spi(spi_slave, spi_clock, spi_mode, spi_active_high);
-    driver::device::mcp3002::mcp3002 mcp3002(spi, mcp3002_vase_voltage);
+    driver::spi::spi mcp3002_spi(mcp3002_spi_slave, mcp3002_spi_clock,
+                                 mcp3002_spi_mode, mcp3002_spi_active_high);
+    driver::device::mcp3002::mcp3002 mcp3002(mcp3002_spi, mcp3002_vase_voltage);
     mcp3002.initialize();
     double voltage =
         mcp3002.read_voltage(driver::device::mcp3002::channel::single_0);
     logger->info("mcp3002 voltage: {}", voltage);
     mcp3002.finalize();
+    // bme280
+    const std::uint8_t bme280_spi_slave = 1;
+    const std::uint32_t bme280_spi_clock = 100000;
+    const std::uint8_t bme280_spi_mode = 0;
+    const driver::spi::active_high bme280_spi_active_high =
+        driver::spi::active_high::disable;
+    const driver::device::bme280::mode bme280_mode =
+        driver::device::bme280::mode::normal;
+    const driver::device::bme280::oversampling_temperature bme280_osr_temp =
+        driver::device::bme280::oversampling_temperature::x16;
+    const driver::device::bme280::oversampling_pressure bme280_osr_pres =
+        driver::device::bme280::oversampling_pressure::x16;
+    const driver::device::bme280::oversampling_humidity bme280_osr_hum =
+        driver::device::bme280::oversampling_humidity::x16;
+    const driver::device::bme280::standby_time bme280_standby =
+        driver::device::bme280::standby_time::ms1000;
+    const driver::device::bme280::filter bme280_filter =
+        driver::device::bme280::filter::x16;
+    driver::spi::spi bme280_spi(bme280_spi_slave, bme280_spi_clock,
+                                bme280_spi_mode, bme280_spi_active_high);
+    driver::device::bme280::bme280 bme280(
+        bme280_spi, bme280_mode, bme280_osr_temp, bme280_osr_pres,
+        bme280_osr_hum, bme280_standby, bme280_filter);
+    bme280.initialize();
+    double temperature = bme280.read_temperature();
+    double pressure = bme280.read_pressure();
+    double humidity = bme280.read_humidity();
+    logger->info("bme280 temperature: {}", temperature);
+    logger->info("bme280 pressure: {}", pressure);
+    logger->info("bme280 humidity: {}", humidity);
+    bme280.finalize();
     // tsl2561 code
     std::uint8_t i2c_bus = 1;
     std::uint8_t i2c_addr = 0x39;

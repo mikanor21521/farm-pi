@@ -1,3 +1,9 @@
+add_library(bme280)
+add_library(device::bme280 ALIAS bme280)
+target_sources(bme280 PRIVATE bme280.cpp)
+target_include_directories(bme280 PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(bme280 PUBLIC driver spdlog)
+
 add_library(mcp3002)
 add_library(device::mcp3002 ALIAS mcp3002)
 target_sources(mcp3002 PRIVATE mcp3002.cpp)
