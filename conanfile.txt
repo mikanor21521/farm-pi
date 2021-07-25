@@ -1,0 +1,16 @@
+[requires]
+libcoap/cci.20200424
+paho-mqtt-cpp/1.2.0
+
+[generators]
+cmake
+
+[options]
+libcoap:shared=True
+libcoap:fPIC=True
+libcoap:with_epoll=False
+libcoap:dtls_backend=None
+paho-mqtt-cpp:shared=True
+paho-mqtt-cpp:fPIC=True
+paho-mqtt-cpp:ssl=False
+
