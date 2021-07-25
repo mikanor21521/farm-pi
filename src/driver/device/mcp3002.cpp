@@ -11,7 +11,7 @@
 
 namespace driver::device::mcp3002 {
 
-mcp3002::mcp3002(const spi::spi& spi_device, double base_voltage) {
+mcp3002::mcp3002(spi::spi* spi_device, double base_voltage) {
     logger = spdlog::get(logger_name);
     if (!logger) {
         std::cerr << "logger get failed." << std::endl;
@@ -25,11 +25,7 @@ mcp3002::mcp3002(const spi::spi& spi_device, double base_voltage) {
             "mcp3002 initialization failed. base voltage under zero.");
     }
     base_ = base_voltage;
-    spidev_ = new spi::spi(spi_device);
-}
-
-mcp3002::~mcp3002() noexcept {
-    delete spidev_;
+    spidev_ = spi_device;
 }
 
 void mcp3002::initialize() const {

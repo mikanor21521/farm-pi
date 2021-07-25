@@ -19,8 +19,7 @@ enum class channel : std::uint8_t {
 
 class mcp3002 final {
 public:
-    mcp3002(const spi::spi& spi_device, double base_voltage);
-    ~mcp3002() noexcept;
+    mcp3002(spi::spi* spi_device, double base_voltage);
     void initialize() const;
     void finalize() const;
     double read_voltage(channel ch);

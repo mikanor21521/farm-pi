@@ -66,10 +66,9 @@ enum class filter : std::uint8_t {
 
 class bme280 final {
 public:
-    bme280(const spi::spi& spi_device, mode mode,
-           oversampling_temperature osr_temp, oversampling_pressure osr_pres,
-           oversampling_humidity osr_hum, standby_time standby, filter filter);
-    ~bme280() noexcept;
+    bme280(spi::spi* spi_device, mode mode, oversampling_temperature osr_temp,
+           oversampling_pressure osr_pres, oversampling_humidity osr_hum,
+           standby_time standby, filter filter);
     void initialize();
     void finalize();
     double read_temperature();

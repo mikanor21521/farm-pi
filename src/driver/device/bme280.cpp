@@ -73,7 +73,7 @@ constexpr std::uint8_t chip_id = 0x60;
 
 }  // namespace
 
-bme280::bme280(const spi::spi& spi_device, mode mode,
+bme280::bme280(spi::spi* spi_device, mode mode,
                oversampling_temperature osr_temp,
                oversampling_pressure osr_pres, oversampling_humidity osr_hum,
                standby_time standby, filter filter) {
@@ -151,12 +151,8 @@ bme280::bme280(const spi::spi& spi_device, mode mode,
             "bme280 initialization failed. filter coeff is invalid.");
     }
     filter_ = filter;
-    spidev_ = new spi::spi(spi_device);
+    spidev_ = spi_device;
     t_fine_ = 0;
-}
-
-bme280::~bme280() noexcept {
-    delete spidev_;
 }
 
 void bme280::initialize() {
