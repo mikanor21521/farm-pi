@@ -2,5 +2,6 @@ add_subdirectory(driver)
 
 add_executable(main)
 target_sources(main PRIVATE main.cpp)
-target_link_libraries(main PRIVATE driver device::mcp3002 device::bme280
-                                   device::tsl2561 spdlog)
+target_link_libraries(
+  main PRIVATE driver device::mcp3002 device::bme280 device::tsl2561 spdlog
+               CONAN_PKG::paho-mqtt-cpp)

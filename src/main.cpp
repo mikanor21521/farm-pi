@@ -1,17 +1,15 @@
-#include <bitset>
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
-#include <vector>
 
 #include "pigpio/pigpio.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+#include "mqtt/client.h"
 
 #include "driver/device/bme280.hpp"
 #include "driver/device/mcp3002.hpp"
@@ -21,9 +19,152 @@
 #include "driver/i2c.hpp"
 #include "driver/spi.hpp"
 
+namespace {
+
+const std::string logger_name = "albireo-pi";
+const std::string log_file_name = "log/main.log";
+const std::string farm_id = "uranum";
+const std::string url = "tcp://localhost:1883";
+
+namespace k5000 {
+
+namespace mcp3002 {
+
+namespace spi {
+
+constexpr std::uint8_t ss = 23;
+constexpr std::uint8_t miso = 27;
+constexpr std::uint8_t mosi = 17;
+constexpr std::uint8_t sck = 22;
+constexpr std::uint32_t clock_speed = 100000;
+constexpr std::uint8_t mode = 0;
+constexpr driver::spi::active_high active_high =
+    driver::spi::active_high::disable;
+
+}  // namespace spi
+
+constexpr double base_voltage = 3.3;
+
+}  // namespace mcp3002
+
+namespace bme280 {
+
+namespace spi {
+
+constexpr std::uint8_t slave = 0;
+constexpr std::uint32_t clock_speed = 100000;
+constexpr std::uint8_t mode = 0;
+constexpr driver::spi::active_high active_high =
+    driver::spi::active_high::disable;
+
+}  // namespace spi
+
+constexpr driver::device::bme280::mode mode =
+    driver::device::bme280::mode::normal;
+constexpr driver::device::bme280::oversampling_temperature osr_temp =
+    driver::device::bme280::oversampling_temperature::x16;
+constexpr driver::device::bme280::oversampling_pressure osr_pres =
+    driver::device::bme280::oversampling_pressure::x16;
+constexpr driver::device::bme280::oversampling_humidity osr_hum =
+    driver::device::bme280::oversampling_humidity::x16;
+constexpr driver::device::bme280::standby_time standby =
+    driver::device::bme280::standby_time::ms1000;
+constexpr driver::device::bme280::filter filter =
+    driver::device::bme280::filter::x16;
+
+}  // namespace bme280
+
+namespace tsl2561 {
+
+namespace i2c {
+
+constexpr std::uint8_t bus_number = 1;
+constexpr std::uint8_t address = 0x39;
+
+}  // namespace i2c
+
+constexpr driver::device::tsl2561::gain gain =
+    driver::device::tsl2561::gain::x16;
+constexpr driver::device::tsl2561::integral integral =
+    driver::device::tsl2561::integral::ms402;
+
+}  // namespace tsl2561
+
+}  // namespace k5000
+
+namespace k3000 {
+
+namespace mcp3002 {
+
+namespace spi {
+
+constexpr std::uint8_t ss = 24;
+constexpr std::uint8_t miso = 27;
+constexpr std::uint8_t mosi = 17;
+constexpr std::uint8_t sck = 22;
+constexpr std::uint32_t clock_speed = 100000;
+constexpr std::uint8_t mode = 0;
+constexpr driver::spi::active_high active_high =
+    driver::spi::active_high::disable;
+
+}  // namespace spi
+
+constexpr double base_voltage = 3.3;
+
+}  // namespace mcp3002
+
+namespace bme280 {
+
+namespace spi {
+
+constexpr std::uint8_t slave = 1;
+constexpr std::uint32_t clock_speed = 100000;
+constexpr std::uint8_t mode = 0;
+constexpr driver::spi::active_high active_high =
+    driver::spi::active_high::disable;
+
+}  // namespace spi
+
+constexpr driver::device::bme280::mode mode =
+    driver::device::bme280::mode::normal;
+constexpr driver::device::bme280::oversampling_temperature osr_temp =
+    driver::device::bme280::oversampling_temperature::x16;
+constexpr driver::device::bme280::oversampling_pressure osr_pres =
+    driver::device::bme280::oversampling_pressure::x16;
+constexpr driver::device::bme280::oversampling_humidity osr_hum =
+    driver::device::bme280::oversampling_humidity::x16;
+constexpr driver::device::bme280::standby_time standby =
+    driver::device::bme280::standby_time::ms1000;
+constexpr driver::device::bme280::filter filter =
+    driver::device::bme280::filter::x16;
+
+}  // namespace bme280
+
+namespace tsl2561 {
+
+namespace i2c {
+
+constexpr std::uint8_t bus_number = 1;
+constexpr std::uint8_t address = 0x29;
+
+}  // namespace i2c
+
+constexpr driver::device::tsl2561::gain gain =
+    driver::device::tsl2561::gain::x16;
+constexpr driver::device::tsl2561::integral integral =
+    driver::device::tsl2561::integral::ms402;
+
+}  // namespace tsl2561
+
+}  // namespace k3000
+
+}  // namespace
+
+void send_to_database(const std::string& topic, double data);
+
+[[noreturn]] void data();
+
 int main() {
-    std::string logger_name = "albireo-pi";
-    std::string log_file_name = "log/main.log";
     try {
         // create console sink
         auto console_sink =
@@ -45,85 +186,98 @@ int main() {
     } catch (const spdlog::spdlog_ex& ex) {
         std::cout << "log initialization failed. " << ex.what() << std::endl;
     }
-    auto logger = spdlog::get(logger_name);
-    const uint8_t gpio_num = 4;
-    const driver::gpio::mode gpio_mode = driver::gpio::mode::output;
     driver::initialize();
-    driver::gpio::gpio gpio(gpio_num, gpio_mode);
-    gpio.initialize();
-    for (int i = 0; i < 10; i++) {
-        if (i % 2 == 0) {
-            logger->info("gpio turn on.");
-            gpio.set_level(driver::gpio::level::high);
-        } else {
-            logger->info("gpio turn off.");
-            gpio.set_level(driver::gpio::level::low);
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    gpio.finalize();
-    // mcp3002
-    const std::uint8_t mcp3002_spi_slave = 0;
-    const std::uint32_t mcp3002_spi_clock = 100000;
-    const std::uint8_t mcp3002_spi_mode = 0;
-    const driver::spi::active_high mcp3002_spi_active_high =
-        driver::spi::active_high::disable;
-    const double mcp3002_vase_voltage = 3.3;
-    driver::spi::spi mcp3002_spi(mcp3002_spi_slave, mcp3002_spi_clock,
-                                 mcp3002_spi_mode, mcp3002_spi_active_high);
-    driver::device::mcp3002::mcp3002 mcp3002(mcp3002_spi, mcp3002_vase_voltage);
-    mcp3002.initialize();
-    double voltage =
-        mcp3002.read_voltage(driver::device::mcp3002::channel::single_0);
-    logger->info("mcp3002 voltage: {}", voltage);
-    mcp3002.finalize();
-    // bme280
-    const std::uint8_t bme280_spi_slave = 1;
-    const std::uint32_t bme280_spi_clock = 100000;
-    const std::uint8_t bme280_spi_mode = 0;
-    const driver::spi::active_high bme280_spi_active_high =
-        driver::spi::active_high::disable;
-    const driver::device::bme280::mode bme280_mode =
-        driver::device::bme280::mode::normal;
-    const driver::device::bme280::oversampling_temperature bme280_osr_temp =
-        driver::device::bme280::oversampling_temperature::x16;
-    const driver::device::bme280::oversampling_pressure bme280_osr_pres =
-        driver::device::bme280::oversampling_pressure::x16;
-    const driver::device::bme280::oversampling_humidity bme280_osr_hum =
-        driver::device::bme280::oversampling_humidity::x16;
-    const driver::device::bme280::standby_time bme280_standby =
-        driver::device::bme280::standby_time::ms1000;
-    const driver::device::bme280::filter bme280_filter =
-        driver::device::bme280::filter::x16;
-    driver::spi::spi bme280_spi(bme280_spi_slave, bme280_spi_clock,
-                                bme280_spi_mode, bme280_spi_active_high);
-    driver::device::bme280::bme280 bme280(
-        bme280_spi, bme280_mode, bme280_osr_temp, bme280_osr_pres,
-        bme280_osr_hum, bme280_standby, bme280_filter);
-    bme280.initialize();
-    double temperature = bme280.read_temperature();
-    double pressure = bme280.read_pressure();
-    double humidity = bme280.read_humidity();
-    logger->info("bme280 temperature: {}", temperature);
-    logger->info("bme280 pressure: {}", pressure);
-    logger->info("bme280 humidity: {}", humidity);
-    bme280.finalize();
-    // tsl2561
-    const std::uint8_t tsl2561_i2c_bus = 1;
-    const std::uint8_t tsl2561_i2c_address =
-        driver::device::tsl2561::address_float;
-    const driver::device::tsl2561::gain tsl2561_gain =
-        driver::device::tsl2561::gain::x16;
-    const driver::device::tsl2561::integral tsl2561_integral =
-        driver::device::tsl2561::integral::ms402;
-    driver::i2c::i2c tsl2561_i2c(tsl2561_i2c_bus, tsl2561_i2c_address);
-    driver::device::tsl2561::tsl2561 tsl2561(tsl2561_i2c, tsl2561_gain,
-                                             tsl2561_integral);
-    tsl2561.initialize();
-    double illuminance = tsl2561.read_illuminance();
-    logger->info("tsl2561 illuminance: {}", illuminance);
-    tsl2561.finalize();
+    std::thread data_th(data);
+    data_th.join();
     driver::finalize();
     spdlog::drop_all();
     return 0;
+}
+
+void send_to_database(const std::string& topic, double data) {
+    mqtt::client cli(url, farm_id);
+    mqtt::connect_options connOpts;
+    connOpts.set_keep_alive_interval(20);
+    connOpts.set_clean_session(true);
+    try {
+        cli.connect(connOpts);
+        auto msg = mqtt::make_message("/farms" + farm_id + "/" + topic, std::to_string(data));
+        msg->set_qos(1);
+        cli.publish(msg);
+        cli.disconnect();
+    }
+    catch (const mqtt::exception& exc) {
+        std::cerr << "Error: " << exc.what() << " ["
+            << exc.get_reason_code() << "]" << std::endl;
+    }
+}
+
+[[noreturn]] void data() {
+    auto logger = spdlog::get(logger_name);
+    logger->info("Data start.");
+    // 5000k
+    // water_temperature and led_temperature
+    auto* k5000_mcp3002_spi = new driver::spi::bit_banging_spi(
+        k5000::mcp3002::spi::ss, k5000::mcp3002::spi::miso,
+        k5000::mcp3002::spi::mosi, k5000::mcp3002::spi::sck,
+        k5000::mcp3002::spi::clock_speed, k5000::mcp3002::spi::mode,
+        k5000::mcp3002::spi::active_high);
+    driver::device::mcp3002::mcp3002 k5000_mcp3002(
+        k5000_mcp3002_spi, k5000::mcp3002::base_voltage);
+    k5000_mcp3002.initialize();
+    // temperature, pressure and humidity
+    auto* k5000_bme280_spi = new driver::spi::main_spi(
+        k5000::bme280::spi::slave, k5000::bme280::spi::clock_speed,
+        k5000::bme280::spi::mode, k5000::bme280::spi::active_high);
+    driver::device::bme280::bme280 k5000_bme280(
+        k5000_bme280_spi, k5000::bme280::mode, k5000::bme280::osr_temp,
+        k5000::bme280::osr_pres, k5000::bme280::osr_hum, k5000::bme280::standby,
+        k5000::bme280::filter);
+    k5000_bme280.initialize();
+    // illuminance
+    driver::i2c::i2c k5000_tsl2561_i2c(k5000::tsl2561::i2c::bus_number,
+                                       k5000::tsl2561::i2c::address);
+    driver::device::tsl2561::tsl2561 k5000_tsl2561(
+        k5000_tsl2561_i2c, k5000::tsl2561::gain, k5000::tsl2561::integral);
+    k5000_tsl2561.initialize();
+    // 3000k
+    // water_temperature and led_temperature
+    auto* k3000_mcp3002_spi = new driver::spi::bit_banging_spi(
+        k3000::mcp3002::spi::ss, k3000::mcp3002::spi::miso,
+        k3000::mcp3002::spi::mosi, k3000::mcp3002::spi::sck,
+        k3000::mcp3002::spi::clock_speed, k3000::mcp3002::spi::mode,
+        k3000::mcp3002::spi::active_high);
+    driver::device::mcp3002::mcp3002 k3000_mcp3002(
+        k3000_mcp3002_spi, k3000::mcp3002::base_voltage);
+    k3000_mcp3002.initialize();
+    // temperature, pressure and humidity
+    auto* k3000_bme280_spi = new driver::spi::main_spi(
+        k3000::bme280::spi::slave, k3000::bme280::spi::clock_speed,
+        k3000::bme280::spi::mode, k3000::bme280::spi::active_high);
+    driver::device::bme280::bme280 k3000_bme280(
+        k3000_bme280_spi, k3000::bme280::mode, k3000::bme280::osr_temp,
+        k3000::bme280::osr_pres, k3000::bme280::osr_hum, k3000::bme280::standby,
+        k3000::bme280::filter);
+    k3000_bme280.initialize();
+    // illuminance
+    driver::i2c::i2c k3000_tsl2561_i2c(k3000::tsl2561::i2c::bus_number,
+                                       k3000::tsl2561::i2c::address);
+    driver::device::tsl2561::tsl2561 k3000_tsl2561(
+        k3000_tsl2561_i2c, k3000::tsl2561::gain, k3000::tsl2561::integral);
+    k3000_tsl2561.initialize();
+    while (true) {
+        send_to_database("k5000/water_temperature" , k5000_mcp3002.read_voltage(driver::device::mcp3002::channel::single_0));
+        send_to_database("k5000/led_temperature"   , k5000_mcp3002.read_voltage(driver::device::mcp3002::channel::single_1));
+        send_to_database("k5000/temperature"       , k5000_bme280.read_temperature());
+        send_to_database("k5000/pressure"          , k5000_bme280.read_pressure());
+        send_to_database("k5000/humidity"          , k5000_bme280.read_humidity());
+        send_to_database("k5000/illuminance"       , k5000_tsl2561.read_illuminance());
+        send_to_database("k3000/water_temperature" , k3000_mcp3002.read_voltage(driver::device::mcp3002::channel::single_0));
+        send_to_database("k3000/led_temperature"   , k3000_mcp3002.read_voltage(driver::device::mcp3002::channel::single_1));
+        send_to_database("k3000/temperature"       , k3000_bme280.read_temperature());
+        send_to_database("k3000/pressure"          , k3000_bme280.read_pressure());
+        send_to_database("k3000/humidity"          , k3000_bme280.read_humidity());
+        send_to_database("k3000/illuminance"       , k3000_tsl2561.read_illuminance());
+        std::this_thread::sleep_for(std::chrono::minutes(1));
+    }
 }

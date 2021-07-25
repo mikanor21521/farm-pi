@@ -1,0 +1,11 @@
+[requires]
+paho-mqtt-cpp/1.2.0
+
+[generators]
+cmake
+
+[options]
+paho-mqtt-cpp:shared=True
+paho-mqtt-cpp:fPIC=True
+paho-mqtt-cpp:ssl=False
+
