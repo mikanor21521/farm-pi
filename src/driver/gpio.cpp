@@ -1,119 +1,128 @@
-#include <cstdint>
-#include <iostream>
+#include "driver.hpp"
 
-#include "pigpio/pigpio.h"
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <string>
+
+#include "pigpio.h"
+
+#include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-#include "driver/driver.hpp"
-#include "driver/gpio.hpp"
+namespace alcor {
 
-namespace driver::gpio {
-
-gpio::gpio(std::uint8_t gpio_num, mode gpio_mode) {
-    logger = spdlog::get(logger_name);
-    if (!logger) {
-        std::cerr << "logger get failed." << std::endl;
-        throw driver_ex("logger get failed.");
-    }
-    logger->trace("gpio num: {}", gpio_num);
-    if (gpio_num > 53) {
-        logger->error("gpio initialization failed. gpio not 0-53.");
-        throw driver_ex("gpio initialisation failed. gpio not 0-53.");
-    }
-    num_ = gpio_num;
-    logger->trace("gpio mode: {}", static_cast<std::uint8_t>(gpio_mode));
-    if (gpio_mode != mode::input && gpio_mode != mode::output) {
-        logger->error("gpio initialization failed. mode not 0-1.");
-        throw driver_ex("gpio initialisation failed. mode not 0-1.");
-    }
-    mode_ = gpio_mode;
+std::unique_ptr<driver::Gpio> Driver::createGpio(std::uint8_t num,
+                                                 driver::Gpio::Mode mode) {
+    std::string logger_name = "gpio";
+    auto logger =
+        logger_->clone(fmt::format("{}-{}", logger_name, gpio_count_));
+    gpio_count_++;
+    auto gpio = std::make_unique<driver::Gpio>(logger, num, mode);
+    return gpio;
 }
 
-void gpio::initialize() const {
-    logger->debug("gpio initialization start.");
-    std::int16_t ret = 0;
-    switch (mode_) {
-        case mode::input:
-            ret = gpioSetMode(num_, PI_INPUT);
-            break;
-        case mode::output:
-            ret = gpioSetMode(num_, PI_OUTPUT);
-            break;
+namespace driver {
+
+Gpio::Gpio(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t num,
+           Mode mode) noexcept
+    : num_(num), mode_(mode) {
+    assert(num < 53);
+    assert(mode == Mode::input || mode == Mode::output);
+    logger_ = logger;
+    logger_->debug("gpio number: {}", num);
+    if (mode == Mode::input) {
+        logger_->debug("gpio mode: input");
+    } else {
+        logger_->debug("gpio mode: output");
     }
-    if (ret < 0) {
-        logger->error("gpio initialization failed. status code: {}", ret);
-        throw driver_ex("gpio initialisation failed.", ret);
-    }
-    logger->debug("gpio initialization done.");
 }
 
-void gpio::finalize() const {
-    logger->debug("gpio finalization start.");
-    std::int16_t ret = 0;
-    if (mode_ == mode::output) {
-        ret = gpioWrite(num_, PI_LOW);
-        if (ret < 0) {
-            logger->error("gpio finalization failed. status code: {}", ret);
-            throw driver_ex("gpio finalization failed.", ret);
-        }
-        ret = gpioSetMode(num_, PI_INPUT);
-        if (ret < 0) {
-            logger->error("gpio finalization failed. status code: {}", ret);
-            throw driver_ex("gpio finalization failed.", ret);
-        }
-    }
-    logger->debug("gpio finalization done.");
+void Gpio::initialize() const {
+    logger_->info("gpio initialization start.");
+    setMode(mode_);
+    logger_->info("gpio initialization done.");
 }
 
-void gpio::set_level(level gpio_level) const {
-    logger->debug("gpio write start.");
-    std::int16_t ret = 0;
-    if (mode_ == mode::input) {
-        logger->error("gpio write failed. mode not output.");
-        throw driver_ex("gpio write failed. mode not output.");
+void Gpio::finalize() const {
+    logger_->info("gpio finalization start.");
+    if (mode_ == Mode::output) {
+        setLevel(Level::low);
+        setMode(Mode::input);
     }
-    switch (gpio_level) {
-        case level::low:
+    logger_->info("gpio finalization done.");
+}
+
+void Gpio::setLevel(Level level) const {
+    assert(mode_ == Mode::output);
+    logger_->info("set gpio level start.");
+    int ret = 0;
+    switch (level) {
+        case Level::low:
             ret = gpioWrite(num_, PI_LOW);
+            logger_->info("set gpio level to low.");
             break;
-        case level::high:
+        case Level::high:
             ret = gpioWrite(num_, PI_HIGH);
+            logger_->info("set gpio level to high.");
             break;
-        default:
-            logger->error("gpio write failed. level not 0-1.");
-            throw driver_ex("gpio write failed. level not 0-1.");
     }
     if (ret < 0) {
-        logger->error("gpio write failed. status code: {}", ret);
-        throw driver_ex("gpio write failed.", ret);
+        logger_->error("set gpio level failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("set gpio level failed. status code: {}", ret);
     }
-    logger->debug("gpio write done. level: {}",
-                  static_cast<std::uint8_t>(gpio_level));
+    logger_->info("set gpio level done.");
 }
 
-level gpio::get_level() const {
-    logger->debug("gpio read start.");
-    std::int16_t ret = 0;
+Gpio::Level Gpio::getLevel() const {
+    logger_->info("get gpio level start.");
+    int ret = 0;
+    Level level = Level::low;
     ret = gpioRead(num_);
     if (ret < 0) {
-        logger->error("gpio read failed. status code: {}", ret);
-        throw driver_ex("gpio read failed.", ret);
+        logger_->error("get gpio level failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("get gpio level failed. status code: {}", ret);
     }
-    level level_;
     switch (ret) {
         case PI_LOW:
-            level_ = level::low;
+            level = Level::low;
+            logger_->info("gpio level is low.");
             break;
         case PI_HIGH:
-            level_ = level::high;
+            level = Level::high;
+            logger_->info("gpio level is high.");
             break;
         default:
-            logger->error("gpio read failed. level not 0-1. level: {}", ret);
-            throw driver_ex("gpio read failed. level not 0-1.");
+            logger_->error("get gpio level failed.");
+            logger_->debug("status : {}", ret);
+            throwDriverException("get gpio level failed. status: {}", ret);
     }
-    logger->debug("gpio read done. level: {}",
-                  static_cast<std::uint8_t>(level_));
-    return level_;
+    logger_->info("get gpio level done.");
+    return level;
 }
 
-}  // namespace driver::gpio
+void Gpio::setMode(Mode mode) const {
+    logger_->info("set gpio mode start.");
+    int ret = 0;
+    switch (mode) {
+        case Mode::input:
+            ret = gpioSetMode(num_, PI_INPUT);
+            logger_->info("set gpio mode to input.");
+            break;
+        case Mode::output:
+            ret = gpioSetMode(num_, PI_OUTPUT);
+            logger_->info("set gpio mode to output.");
+            break;
+    }
+    if (ret < 0) {
+        logger_->error("set gpio mode failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("set gpio mode failed. status code: {}", ret);
+    }
+    logger_->info("set gpio mode done.");
+}
+
+}  // namespace driver
+}  // namespace alcor

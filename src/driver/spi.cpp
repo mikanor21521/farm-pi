@@ -1,183 +1,153 @@
+#include "driver.hpp"
+
 #include <bitset>
+#include <cassert>
 #include <cstdint>
-#include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
-#include "pigpio/pigpio.h"
+#include "pigpio.h"
+
+#include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-#include "driver/driver.hpp"
-#include "driver/spi.hpp"
+namespace alcor {
 
-namespace driver::spi {
-
-spi::spi() {
-    logger = spdlog::get(logger_name);
-    if (!logger) {
-        std::cerr << "logger get failed." << std::endl;
-        throw driver_ex("logger get failed.");
-    }
+std::unique_ptr<driver::Spi> Driver::createSpi(std::uint8_t cs_pin,
+                                               std::uint32_t clock_speed,
+                                               std::uint8_t cpol,
+                                               std::uint8_t cpha,
+                                               bool active_high) {
+    std::string logger_name = "spi";
+    auto logger = logger_->clone(fmt::format("{}-{}", logger_name, spi_count_));
+    spi_count_++;
+    auto spi = std::make_unique<driver::Spi>(logger, cs_pin, clock_speed, cpol,
+                                             cpha, active_high);
+    return spi;
 }
 
-main_spi::main_spi(std::uint8_t slave_number, std::uint32_t clock_speed,
-                   std::uint8_t mode_number, active_high active_high)
-    : spi() {
-    logger->trace("spi slave number: {}", slave_number);
-    if (slave_number > 1) {
-        logger->error(
-            "spi initialization failed. main spi slave number not 0-1.");
-        throw driver_ex(
-            "spi initialization failed. main spi slave number not 0-1.");
-    }
-    slave_ = slave_number;
-    logger->trace("spi clock speed: {}", clock_speed);
-    if (clock_speed < 32000 || clock_speed > 125000000) {
-        logger->error(
-            "spi initialization failed. spi clock speed not 32K-125M.");
-        throw driver_ex(
-            "spi initialization failed. spi clock speed not 32K-125M.");
-    }
-    clock_ = clock_speed;
-    logger->trace("spi mode number: {}", mode_number);
-    if (mode_number > 4) {
-        logger->error("spi initialization failed. spi mode number not 0-4");
-        throw driver_ex("spi initialization failed. spi mode number not 0-4");
-    }
-    mode_ = mode_number;
-    logger->trace("spi active high: {}",
-                  static_cast<std::uint8_t>(active_high));
-    if (active_high != active_high::enable &&
-        active_high != active_high::disable) {
-        logger->error(
-            "spi initialization failed. spi active high not enable/disable.");
-        throw driver_ex(
-            "spi initialization failed. spi active high not enable/disable.");
-    }
-    active_ = active_high;
-    spidev_ = 0x00;
+namespace driver {
+
+Spi::Spi(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t cs_pin,
+         std::uint32_t clock_speed, std::uint8_t cpol, std::uint8_t cpha,
+         bool active_high) noexcept
+    : cs_pin_(cs_pin),
+      clock_speed_(clock_speed),
+      cpol_(cpol),
+      cpha_(cpha),
+      active_high_(active_high),
+      spidev_(0x00) {
+    assert(cs_pin == 0 || cs_pin == 1);
+    assert(32000 < clock_speed && clock_speed < 125000000);
+    assert(cpol == 0 || cpol == 1);
+    assert(cpha == 0 || cpol == 1);
+    logger_ = logger;
+    logger_->debug("spi cs pin number: {}", cs_pin);
+    logger_->debug("spi clock speed: {}", clock_speed);
+    logger_->debug("spi clock polarity: {}", cpol);
+    logger_->debug("spi clock phase: {}", cpha);
+    logger_->debug("spi active high: {}", active_high);
 }
 
-void main_spi::initialize() {
-    logger->debug("spi initialization start.");
-    std::int8_t ret = 0;
-    std::bitset<22> spi_flag = 0;
-    spi_flag |= mode_;
-    spi_flag |= static_cast<uint8_t>(active_) << slave_;
-    ret = spiOpen(slave_, clock_, spi_flag.to_ulong());
+void Spi::initialize() {
+    logger_->info("spi initialization start.");
+    const int spi_flag_size = 22;
+    int ret = 0;
+    std::bitset<spi_flag_size> flag;
+    if (cpha_ == 1) {
+        flag.set(0);
+    }
+    if (cpol_ == 1) {
+        flag.set(1);
+    }
+    if (active_high_) {
+        flag.set(2 + cs_pin_);
+    }
+    logger_->debug("spi initialize flag: {:#024b}", flag.to_ulong());
+    ret = spiOpen(cs_pin_, clock_speed_, flag.to_ulong());
     if (ret < 0) {
-        logger->error("spi initialization failed. return code: {}", spidev_);
-        throw driver_ex("spi initialization failed.", spidev_);
+        logger_->error("spi initialization failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("spi initialization failed. status code: {}", ret);
     }
     spidev_ = ret;
-    logger->debug("spi initialization done.");
+    logger_->info("spi initialization done.");
 }
 
-void main_spi::finalize() const {
-    logger->debug("spi finalization start.");
-    std::int16_t ret = 0;
+void Spi::finalize() const {
+    logger_->info("spi finalization start.");
+    int ret = 0;
     ret = spiClose(spidev_);
     if (ret < 0) {
-        logger->error("spi finalization failed. return code {}", ret);
-        throw driver_ex("spi finalization failed.", ret);
+        logger_->error("spi finalization failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("spi finalization failed. status code: {}", ret);
     }
-    logger->debug("spi finalization done.");
+    logger_->info("spi finalization done.");
 }
 
-std::vector<std::bitset<8>> main_spi::transfer(
-    std::vector<std::bitset<8>> data) {
-    logger->debug("spi transfer start.");
-    std::int16_t ret = 0;
+void Spi::write(std::vector<std::uint8_t> data) const {
+    logger_->info("spi data write start.");
+    logger_->info("spi data written is [{:#04x}]", fmt::join(data, ", "));
+    int ret = 0;
     std::uintmax_t length = data.size();
-    char* tx_buffer = new char[length];
-    char* rx_buffer = new char[length];
+    std::vector<char> buffer(length);
     for (std::uintmax_t i = 0; i < length; i++) {
-        tx_buffer[i] = static_cast<std::uint8_t>(data.at(i).to_ulong());
-        rx_buffer[i] = 0x00;
+        buffer.at(i) = static_cast<char>(data.at(i));
     }
-    ret = spiXfer(spidev_, tx_buffer, rx_buffer, length);
+    ret = spiWrite(spidev_, buffer.data(), length);
     if (ret < 0) {
-        logger->error("spi transfer failed. return code: {}", ret);
-        throw driver_ex("spi transfer failed.", ret);
+        logger_->error("spi data write failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("spi data write failed. status code: {}", ret);
     }
+    logger_->info("spi data write done.");
+}
+
+std::vector<std::uint8_t> Spi::read(std::uintmax_t length) const {
+    logger_->info("spi data read start.");
+    int ret = 0;
+    std::vector<char> buffer(length);
+    ret = spiRead(spidev_, buffer.data(), length);
+    if (ret < 0) {
+        logger_->error("spi data read failed.");
+        logger_->debug("status code: {}", ret);
+        throwDriverException("spi data read failed. status code: {}", ret);
+    }
+    std::vector<std::uint8_t> data(length);
     for (std::uintmax_t i = 0; i < length; i++) {
-        data.at(i) = rx_buffer[i];
+        data.at(i) = static_cast<std::uint8_t>(buffer.at(i));
     }
-    delete[] tx_buffer;
-    delete[] rx_buffer;
-    logger->debug("spi transfer done.");
+    logger_->info("spi data read is [{:#04x}]", fmt::join(data, ", "));
+    logger_->info("spi data read done.");
     return data;
 }
 
-bit_banging_spi::bit_banging_spi(std::uint8_t ss_pin, std::uint8_t miso_pin,
-                                 std::uint8_t mosi_pin, std::uint8_t sck_pin,
-                                 std::uint32_t clock_speed, std::uint8_t mode,
-                                 active_high active_high)
-    : spi() {
-    logger->trace("slave select pin: {}", ss_pin);
-    ss_pin_ = ss_pin;
-    logger->trace("master in slave out pin: {}", miso_pin);
-    miso_pin_ = miso_pin;
-    logger->trace("master out slave in pin: {}", mosi_pin);
-    mosi_pin_ = mosi_pin;
-    logger->trace("serial clock pin: {}", sck_pin);
-    sck_pin_ = sck_pin;
-    logger->trace("clock speed: {}", clock_speed);
-    clock_speed_ = clock_speed;
-    logger->trace("spi mode: {}", mode);
-    mode_ = mode;
-    logger->trace("active high: {}", static_cast<std::uint8_t>(active_high));
-    active_ = active_high;
-}
-
-void bit_banging_spi::initialize() {
-    logger->debug("spi initialization start.");
-    std::int8_t ret = 0;
-    std::bitset<22> spi_flag = 0;
-    spi_flag |= mode_;
-    spi_flag |= static_cast<std::uint8_t>(active_);
-    ret = bbSPIOpen(ss_pin_, miso_pin_, mosi_pin_, sck_pin_, clock_speed_,
-                    spi_flag.to_ulong());
-    if (ret < 0) {
-        logger->error("spi initialization failed. return code: {}", ret);
-        throw driver_ex("spi initialization failed.", ret);
-    }
-    logger->debug("spi initialization done.");
-}
-
-void bit_banging_spi::finalize() const {
-    logger->debug("spi finalization start.");
-    std::int8_t ret = 0;
-    ret = bbSPIClose(ss_pin_);
-    if (ret < 0) {
-        logger->error("spi finalization failed. return code: {}", ret);
-        throw driver_ex("spi finalization failed.", ret);
-    }
-    logger->debug("spi finalization done.");
-}
-
-std::vector<std::bitset<8>> bit_banging_spi::transfer(
-    std::vector<std::bitset<8>> data) {
-    logger->debug("spi transfer start.");
-    std::int8_t ret = 0;
+std::vector<std::uint8_t> Spi::transfer(std::vector<std::uint8_t> data) const {
+    logger_->info("spi data transfer start.");
+    logger_->info("spi data written is [{:#04x}]", fmt::join(data, ", "));
+    int ret = 0;
     std::uintmax_t length = data.size();
-    char* tx_buffer = new char[length];
-    char* rx_buffer = new char[length];
+    std::vector<char> tx_buf(length);
+    std::vector<char> rx_buf(length);
     for (std::uintmax_t i = 0; i < length; i++) {
-        tx_buffer[i] = static_cast<std::uint8_t>(data.at(i).to_ulong());
-        rx_buffer[i] = 0x00;
+        tx_buf.at(i) = static_cast<char>(data.at(i));
     }
-    ret = bbSPIXfer(ss_pin_, tx_buffer, rx_buffer, length);
+    ret = spiXfer(spidev_, tx_buf.data(), rx_buf.data(), length);
     if (ret < 0) {
-        logger->error("spi transfer failed. return code: {}", ret);
-        throw driver_ex("spi transfer failed.", ret);
+        logger_->error("spi data transfer failed.");
+        logger_->debug("status code: {}");
+        throwDriverException("spi data transfer failed. status code: {}", ret);
     }
     for (std::uintmax_t i = 0; i < length; i++) {
-        data.at(i) = rx_buffer[i];
+        data.at(i) = static_cast<std::uint8_t>(rx_buf.at(i));
     }
-    delete[] tx_buffer;
-    delete[] rx_buffer;
-    logger->debug("spi transfer done.");
+    logger_->info("spi data read is [{:#04x}]", fmt::join(data, ", "));
+    logger_->info("spi data transfer done.");
     return data;
 }
 
-}  // namespace driver::spi
+}  // namespace driver
+
+}  // namespace alcor
