@@ -1,9 +1,21 @@
-[submodule "vendor/pigpio"]
-	path = vendor/pigpio
+[submodule "cmake/cmake-conan"]
+	path = cmake/cmake-conan
+	url = https://github.com/conan-io/cmake-conan
+[submodule "libs/pigpio"]
+	path = libs/pigpio
 	url = https://github.com/joan2937/pigpio
-[submodule "vendor/fmt"]
-	path = vendor/fmt
-	url = https://github.com/fmtlib/fmt
-[submodule "vendor/spdlog"]
-	path = vendor/spdlog
+[submodule "libs/spdlog"]
+	path = libs/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "libs/fmt"]
+	path = libs/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "libs/cpp-httplib"]
+	path = libs/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib
+[submodule "libs/json"]
+	path = libs/json
+	url = https://github.com/nlohmann/json
+[submodule "libs/cxxopts"]
+	path = libs/cxxopts
+	url = https://github.com/jarro2783/cxxopts

@@ -1,0 +1,10 @@
+format:
+  line_width: 80
+  tab_size: 4
+  line_ending: unix
+  command_case: lower
+  keyword_case: upper
+  enable_sort: true
+  autosort: true
+markup:
+  enable_markup: false
