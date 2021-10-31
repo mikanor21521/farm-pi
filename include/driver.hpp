@@ -10,8 +10,6 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-namespace alcor {
-
 namespace driver {
 
 class DriverException : public std::exception {
@@ -113,7 +111,5 @@ private:
     int spi_count_ = 0;
     int i2c_count_ = 0;
 };
-
-}  // namespace alcor
 
 #endif

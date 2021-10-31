@@ -12,8 +12,6 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-namespace alcor {
-
 std::unique_ptr<driver::Spi> Driver::createSpi(std::uint8_t cs_pin,
                                                std::uint32_t clock_speed,
                                                std::uint8_t cpol,
@@ -149,5 +147,3 @@ std::vector<std::uint8_t> Spi::transfer(std::vector<std::uint8_t> data) const {
 }
 
 }  // namespace driver
-
-}  // namespace alcor

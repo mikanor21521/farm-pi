@@ -11,8 +11,6 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-namespace alcor {
-
 std::unique_ptr<driver::I2c> Driver::createI2c(std::uint8_t bus_number,
                                                std::uint8_t address) {
     std::string logger_name = "i2c";
@@ -98,5 +96,3 @@ std::vector<std::uint8_t> I2c::read(std::uintmax_t length) const {
 }
 
 }  // namespace driver
-
-}  // namespace alcor

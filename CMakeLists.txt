@@ -9,7 +9,9 @@ conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
 add_subdirectory(libs)
 
 add_executable(main)
-target_sources(main PRIVATE src/main.cpp src/driver/driver.cpp src/driver/gpio.cpp src/driver/spi.cpp src/driver/i2c.cpp)
+target_sources(
+    main PRIVATE src/main.cpp src/driver/driver.cpp src/driver/gpio.cpp
+                 src/driver/spi.cpp src/driver/i2c.cpp)
 target_include_directories(main PRIVATE include)
 target_link_libraries(main PRIVATE pigpio spdlog json httplib cxxopts
                                    CONAN_PKG::paho-mqtt-cpp)

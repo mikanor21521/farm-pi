@@ -10,8 +10,6 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-namespace alcor {
-
 std::unique_ptr<driver::Gpio> Driver::createGpio(std::uint8_t num,
                                                  driver::Gpio::Mode mode) {
     std::string logger_name = "gpio";
@@ -125,4 +123,3 @@ void Gpio::setMode(Mode mode) const {
 }
 
 }  // namespace driver
-}  // namespace alcor

@@ -7,8 +7,6 @@
 
 #include "spdlog/spdlog.h"
 
-namespace alcor {
-
 Driver::Driver(const std::shared_ptr<spdlog::logger>& logger) {
     std::string logger_name = "driver";
     logger_ = logger->clone(logger_name);
@@ -29,5 +27,3 @@ void Driver::finalize() {
     gpioTerminate();
     logger_->info("pigpio finalization done.");
 }
-
-}  // namespace alcor
