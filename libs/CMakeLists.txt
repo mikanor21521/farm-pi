@@ -54,3 +54,6 @@ target_include_directories(httplib INTERFACE libs/cpp-httplib)
 
 add_library(cxxopts INTERFACE)
 target_include_directories(cxxopts INTERFACE libs/cxxopts/include)
+
+add_library(tomlplusplus INTERFACE)
+target_include_directories(tomlplusplus INTERFACE libs/tomlplusplus/include)
