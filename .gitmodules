@@ -1,6 +1,3 @@
-[submodule "cmake/cmake-conan"]
-	path = cmake/cmake-conan
-	url = https://github.com/conan-io/cmake-conan
 [submodule "libs/pigpio"]
 	path = libs/pigpio
 	url = https://github.com/joan2937/pigpio
@@ -22,3 +19,9 @@
 [submodule "libs/tomlplusplus"]
 	path = libs/tomlplusplus
 	url = https://github.com/marzer/tomlplusplus/
+[submodule "libs/paho.mqtt.c"]
+	path = libs/paho.mqtt.c
+	url = https://github.com/eclipse/paho.mqtt.c
+[submodule "libs/paho.mqtt.cpp"]
+	path = libs/paho.mqtt.cpp
+	url = https://github.com/eclipse/paho.mqtt.cpp

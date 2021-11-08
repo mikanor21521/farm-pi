@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.15)
 enable_language(C CXX)
 project(albireo-pi)
 
-include(cmake/cmake-conan/conan.cmake)
-
-conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
-
 add_subdirectory(libs)
 
 add_executable(main)
@@ -13,8 +9,15 @@ target_sources(
     main PRIVATE src/main.cpp src/driver/driver.cpp src/driver/gpio.cpp
                  src/driver/spi.cpp src/driver/i2c.cpp)
 target_include_directories(main PRIVATE include)
-target_link_libraries(main PRIVATE pigpio spdlog json httplib cxxopts tomlplusplus
-                                   CONAN_PKG::paho-mqtt-cpp)
+target_link_libraries(
+    main
+    PRIVATE pigpio
+            spdlog
+            json
+            httplib
+            cxxopts
+            tomlplusplus
+            paho-mqtt-cpp)
 target_compile_options(main PRIVATE -Wall -Wextra $<$<CONFIG:Debug>:-g3 -O0>
                                     $<$<CONFIG:Relese>:-g0 -O3>)
 target_compile_features(main PRIVATE cxx_std_17)
