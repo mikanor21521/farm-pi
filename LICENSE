@@ -22,20 +22,54 @@ SOFTWARE.
 
 The externally maintained libraries used by Observer are:
 
- - spdlog
-    Located at vendor/spdlog
-    Copyright (c) 2016 Gabi Melman.
+ - cpp-httplib
+    Located at libs/cpp-httplib
+    Copyright (c) 2017 yhirose
     licensed as follows:
-    https://github.com/gabime/spdlog/blob/v1.8.5/LICENSE
+    https://github.com/yhirose/cpp-httplib/blob/v0.9.7/LICENSE
 
- - fmt lib
-    Located at vendor/fmt
-    Copyright (c) 2012 - present, Victor Zverovich.
+ - cxxopts
+    Located at libs/cxxopts
+    Copyright (c) 2014 Jarryd Beck
     licensed as follows:
-    https://github.com/fmtlib/fmt/blob/7.1.3/LICENSE.rst
+    https://github.com/jarro2783/cxxopts/blob/v3.0.0/LICENSE
+
+ - {fmt}
+    Located at libs/fmt
+    Copyright (c) 2012 - present, Victor Zverovich
+    licensed as follows:
+    https://github.com/fmtlib/fmt/blob/8.0.1/LICENSE.rst
+
+ - nlohmann json
+    Located at libs/json
+    Copyright (c) 2013-2021 Niels Lohmann
+    licensed as follows:
+    https://github.com/nlohmann/json/blob/v3.10.4/LICENSE.MIT
+
+ - Eclipse Paho MQTT C
+    Located at libs/paho.mqtt.c
+    licensed as follows:
+    https://github.com/eclipse/paho.mqtt.c/blob/v1.3.9/LICENSE
+
+ - Eclipse Paho MQTT C++
+    Located at libs/paho.mqtt.cpp
+    licensed as follows:
+    https://github.com/eclipse/paho.mqtt.cpp/blob/v1.2.0/epl-v10
 
  - pigpio
-    Located at vendor/pigpio
+    Located at libs/pigpio
     licensed as follows:
     https://github.com/joan2937/pigpio/blob/v79/UNLICENCE
+
+ - spdlog
+    Located at libs/spdlog
+    Copyright (c) 2016 Gabi Melman.
+    licensed as follows:
+    https://github.com/gabime/spdlog/blob/v1.9.2/LICENSE
+
+ - TOML++
+    Located at libs/tomlplusplus
+    Copyright (c) Mark Gillard <mark.gillard@outlook.com.au>
+    licensed as follows:
+    https://github.com/marzer/tomlplusplus/blob/v2.5.0/LICENSE
 
