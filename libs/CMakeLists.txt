@@ -47,13 +47,13 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_library(json INTERFACE)
-target_include_directories(json INTERFACE libs/json/include)
+target_include_directories(json INTERFACE json/include)
 
 add_library(httplib INTERFACE)
-target_include_directories(httplib INTERFACE libs/cpp-httplib)
+target_include_directories(httplib INTERFACE cpp-httplib)
 
 add_library(cxxopts INTERFACE)
-target_include_directories(cxxopts INTERFACE libs/cxxopts/include)
+target_include_directories(cxxopts INTERFACE cxxopts/include)
 
 add_library(tomlplusplus INTERFACE)
-target_include_directories(tomlplusplus INTERFACE libs/tomlplusplus/include)
+target_include_directories(tomlplusplus INTERFACE tomlplusplus/include)
