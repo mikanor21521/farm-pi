@@ -7,7 +7,7 @@ add_subdirectory(libs)
 add_executable(main)
 target_sources(
     main PRIVATE src/main.cpp src/driver/driver.cpp src/driver/gpio.cpp
-                 src/driver/spi.cpp src/driver/i2c.cpp)
+                 src/driver/pwm.cpp src/driver/spi.cpp src/driver/i2c.cpp)
 target_include_directories(main PRIVATE include)
 target_link_libraries(
     main

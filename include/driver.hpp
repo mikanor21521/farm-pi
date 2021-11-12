@@ -52,6 +52,22 @@ private:
     Mode mode_;
 };
 
+class Pwm final {
+public:
+    Pwm(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t pin,
+        std::uint16_t range, std::uint32_t frequency) noexcept;
+    void initialize() const;
+    void finalize() const;
+    void setPWM(std::uint16_t duty) const;
+    [[nodiscard]] std::uint16_t getPWM() const;
+
+private:
+    std::shared_ptr<spdlog::logger> logger_;
+    std::uint8_t pin_;
+    std::uint16_t range_;
+    std::uint32_t frequency_;
+};
+
 class Spi final {
 public:
     Spi(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t cs_pin,
@@ -99,6 +115,8 @@ public:
     void finalize();
     [[nodiscard]] std::unique_ptr<driver::Gpio> createGpio(
         std::uint8_t num, driver::Gpio::Mode mode);
+    [[nodiscard]] std::unique_ptr<driver::Pwm> createPwm(
+        std::uint8_t pin, std::uint16_t range, std::uint32_t frequency);
     [[nodiscard]] std::unique_ptr<driver::Spi> createSpi(
         std::uint8_t cs_pin, std::uint32_t clock_speed, std::uint8_t cpol,
         std::uint8_t cpha, bool active_high);
@@ -108,6 +126,7 @@ public:
 private:
     std::shared_ptr<spdlog::logger> logger_;
     int gpio_count_ = 0;
+    int pwm_count_ = 0;
     int spi_count_ = 0;
     int i2c_count_ = 0;
 };
