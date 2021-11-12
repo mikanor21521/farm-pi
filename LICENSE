@@ -67,6 +67,12 @@ The externally maintained libraries used by Observer are:
     licensed as follows:
     https://github.com/gabime/spdlog/blob/v1.9.2/LICENSE
 
+ - Taskflow
+    Located at libs/taskflow
+    Copyright (c) 2018-2021 T.-W. Huang, C.-X. Lin, G. Guo, and M. Wong
+    licensed as follows:
+    https://github.com/taskflow/taskflow/blob/v3.2.0/LICENSE
+
  - TOML++
     Located at libs/tomlplusplus
     Copyright (c) Mark Gillard <mark.gillard@outlook.com.au>
