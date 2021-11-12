@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -12,7 +13,7 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-std::unique_ptr<driver::Spi> Driver::createSpi(std::uint8_t cs_pin,
+std::shared_ptr<driver::Spi> Driver::createSpi(std::uint8_t cs_pin,
                                                std::uint32_t clock_speed,
                                                std::uint8_t cpol,
                                                std::uint8_t cpha,
@@ -20,12 +21,14 @@ std::unique_ptr<driver::Spi> Driver::createSpi(std::uint8_t cs_pin,
     std::string logger_name = "spi";
     auto logger = logger_->clone(fmt::format("{}-{}", logger_name, spi_count_));
     spi_count_++;
-    auto spi = std::make_unique<driver::Spi>(logger, cs_pin, clock_speed, cpol,
+    auto spi = std::make_shared<driver::Spi>(logger, cs_pin, clock_speed, cpol,
                                              cpha, active_high);
     return spi;
 }
 
 namespace driver {
+
+std::mutex Spi::mtx_;
 
 Spi::Spi(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t cs_pin,
          std::uint32_t clock_speed, std::uint8_t cpol, std::uint8_t cpha,
@@ -86,6 +89,7 @@ void Spi::finalize() const {
 }
 
 void Spi::write(std::vector<std::uint8_t> data) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("spi data write start.");
     logger_->info("spi data written is [{:#04x}]", fmt::join(data, ", "));
     int ret = 0;
@@ -104,6 +108,7 @@ void Spi::write(std::vector<std::uint8_t> data) const {
 }
 
 std::vector<std::uint8_t> Spi::read(std::uintmax_t length) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("spi data read start.");
     int ret = 0;
     std::vector<char> buffer(length);
@@ -123,6 +128,7 @@ std::vector<std::uint8_t> Spi::read(std::uintmax_t length) const {
 }
 
 std::vector<std::uint8_t> Spi::transfer(std::vector<std::uint8_t> data) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("spi data transfer start.");
     logger_->info("spi data written is [{:#04x}]", fmt::join(data, ", "));
     int ret = 0;

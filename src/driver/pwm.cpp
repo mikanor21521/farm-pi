@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "pigpio.h"
@@ -10,17 +11,19 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-std::unique_ptr<driver::Pwm> Driver::createPwm(std::uint8_t pin,
+std::shared_ptr<driver::Pwm> Driver::createPwm(std::uint8_t pin,
                                                std::uint16_t range,
                                                std::uint32_t frequency) {
     std::string logger_name = "pwm";
     auto logger = logger_->clone(fmt::format("{}-{}", logger_name, pwm_count_));
     pwm_count_++;
-    auto pwm = std::make_unique<driver::Pwm>(logger, pin, range, frequency);
+    auto pwm = std::make_shared<driver::Pwm>(logger, pin, range, frequency);
     return pwm;
 }
 
 namespace driver {
+
+std::mutex Pwm::mtx_;
 
 Pwm::Pwm(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t pin,
          std::uint16_t range, std::uint32_t frequency) noexcept
@@ -72,6 +75,7 @@ void Pwm::finalize() const {
 }
 
 void Pwm::setPWM(std::uint16_t duty) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("set pwm start.");
     int ret = 0;
     ret = gpioPWM(pin_, duty);
@@ -84,6 +88,7 @@ void Pwm::setPWM(std::uint16_t duty) const {
 }
 
 std::uint16_t Pwm::getPWM() const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("get pwm start.");
     std::int32_t ret = 0;
     ret = gpioGetPWMdutycycle(pin_);

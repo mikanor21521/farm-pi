@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -11,16 +12,18 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-std::unique_ptr<driver::I2c> Driver::createI2c(std::uint8_t bus_number,
+std::shared_ptr<driver::I2c> Driver::createI2c(std::uint8_t bus_number,
                                                std::uint8_t address) {
     std::string logger_name = "i2c";
     auto logger = logger_->clone(fmt::format("{}-{}", logger_name, i2c_count_));
     i2c_count_++;
-    auto i2c = std::make_unique<driver::I2c>(logger, bus_number, address);
+    auto i2c = std::make_shared<driver::I2c>(logger, bus_number, address);
     return i2c;
 }
 
 namespace driver {
+
+std::mutex I2c::mtx_;
 
 I2c::I2c(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t bus_number,
          std::uint8_t address) noexcept
@@ -59,6 +62,7 @@ void I2c::finalize() const {
 }
 
 void I2c::write(std::vector<std::uint8_t> data) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("i2c data write start.");
     logger_->info("i2c data written is [{:#04x}]", fmt::join(data, ", "));
     int ret = 0;
@@ -77,6 +81,7 @@ void I2c::write(std::vector<std::uint8_t> data) const {
 }
 
 std::vector<std::uint8_t> I2c::read(std::uintmax_t length) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("i2c data read start.");
     int ret = 0;
     std::vector<char> buffer(length);

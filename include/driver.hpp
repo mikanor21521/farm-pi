@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,7 @@ public:
 
 private:
     void setMode(Mode mode) const;
+    static std::mutex mtx_;
     std::shared_ptr<spdlog::logger> logger_;
     std::uint8_t num_;
     Mode mode_;
@@ -62,6 +64,7 @@ public:
     [[nodiscard]] std::uint16_t getPWM() const;
 
 private:
+    static std::mutex mtx_;
     std::shared_ptr<spdlog::logger> logger_;
     std::uint8_t pin_;
     std::uint16_t range_;
@@ -81,6 +84,7 @@ public:
         std::vector<std::uint8_t> data) const;
 
 private:
+    static std::mutex mtx_;
     std::shared_ptr<spdlog::logger> logger_;
     std::uint8_t cs_pin_;
     std::uint32_t clock_speed_;
@@ -100,6 +104,7 @@ public:
     [[nodiscard]] std::vector<std::uint8_t> read(std::uintmax_t length) const;
 
 private:
+    static std::mutex mtx_;
     std::shared_ptr<spdlog::logger> logger_;
     std::uint8_t bus_number_;
     std::uint8_t address_;
@@ -113,14 +118,14 @@ public:
     explicit Driver(const std::shared_ptr<spdlog::logger>& logger);
     void initialize();
     void finalize();
-    [[nodiscard]] std::unique_ptr<driver::Gpio> createGpio(
+    [[nodiscard]] std::shared_ptr<driver::Gpio> createGpio(
         std::uint8_t num, driver::Gpio::Mode mode);
-    [[nodiscard]] std::unique_ptr<driver::Pwm> createPwm(
+    [[nodiscard]] std::shared_ptr<driver::Pwm> createPwm(
         std::uint8_t pin, std::uint16_t range, std::uint32_t frequency);
-    [[nodiscard]] std::unique_ptr<driver::Spi> createSpi(
+    [[nodiscard]] std::shared_ptr<driver::Spi> createSpi(
         std::uint8_t cs_pin, std::uint32_t clock_speed, std::uint8_t cpol,
         std::uint8_t cpha, bool active_high);
-    [[nodiscard]] std::unique_ptr<driver::I2c> createI2c(
+    [[nodiscard]] std::shared_ptr<driver::I2c> createI2c(
         std::uint8_t bus_number, std::uint8_t address);
 
 private:

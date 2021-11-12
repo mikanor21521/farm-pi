@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "pigpio.h"
@@ -10,17 +11,19 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-std::unique_ptr<driver::Gpio> Driver::createGpio(std::uint8_t num,
+std::shared_ptr<driver::Gpio> Driver::createGpio(std::uint8_t num,
                                                  driver::Gpio::Mode mode) {
     std::string logger_name = "gpio";
     auto logger =
         logger_->clone(fmt::format("{}-{}", logger_name, gpio_count_));
     gpio_count_++;
-    auto gpio = std::make_unique<driver::Gpio>(logger, num, mode);
+    auto gpio = std::make_shared<driver::Gpio>(logger, num, mode);
     return gpio;
 }
 
 namespace driver {
+
+std::mutex Gpio::mtx_;
 
 Gpio::Gpio(const std::shared_ptr<spdlog::logger>& logger, std::uint8_t num,
            Mode mode) noexcept
@@ -52,6 +55,7 @@ void Gpio::finalize() const {
 }
 
 void Gpio::setLevel(Level level) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     assert(mode_ == Mode::output);
     logger_->info("set gpio level start.");
     int ret = 0;
@@ -74,6 +78,7 @@ void Gpio::setLevel(Level level) const {
 }
 
 Gpio::Level Gpio::getLevel() const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("get gpio level start.");
     int ret = 0;
     Level level = Level::low;
@@ -102,6 +107,7 @@ Gpio::Level Gpio::getLevel() const {
 }
 
 void Gpio::setMode(Mode mode) const {
+    std::lock_guard<std::mutex> lock(mtx_);
     logger_->info("set gpio mode start.");
     int ret = 0;
     switch (mode) {
