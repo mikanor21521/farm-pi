@@ -25,3 +25,6 @@
 [submodule "libs/paho.mqtt.cpp"]
 	path = libs/paho.mqtt.cpp
 	url = https://github.com/eclipse/paho.mqtt.cpp
+[submodule "libs/taskflow"]
+	path = libs/taskflow
+	url = https://github.com/taskflow/taskflow

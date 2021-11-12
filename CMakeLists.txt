@@ -17,7 +17,8 @@ target_link_libraries(
             httplib
             cxxopts
             tomlplusplus
-            paho-mqtt-cpp)
+            paho-mqtt-cpp
+            taskflow)
 target_compile_options(main PRIVATE -Wall -Wextra $<$<CONFIG:Debug>:-g3 -O0>
                                     $<$<CONFIG:Relese>:-g0 -O3>)
 target_compile_features(main PRIVATE cxx_std_17)

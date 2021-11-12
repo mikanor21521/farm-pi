@@ -134,3 +134,6 @@ target_include_directories(cxxopts INTERFACE cxxopts/include)
 
 add_library(tomlplusplus INTERFACE)
 target_include_directories(tomlplusplus INTERFACE tomlplusplus/include)
+
+add_library(taskflow INTERFACE)
+target_include_directories(taskflow INTERFACE taskflow)
