@@ -21,7 +21,7 @@ std::shared_ptr<Light> createLight(
 
 Light::Light(std::shared_ptr<spdlog::logger> logger,
              std::shared_ptr<driver::Gpio> gpio) noexcept
-    : logger_(std::move(logger)), gpio_(std::move_if_noexcept(gpio)) {}
+    : logger_(std::move(logger)), gpio_(std::move(gpio)) {}
 
 void Light::initialize() {
     logger_->info("light initialization start.");
