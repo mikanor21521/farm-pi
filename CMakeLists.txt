@@ -17,7 +17,8 @@ target_sources(
             src/device/mcp3002.cpp
             src/device/tsl2561.cpp
             src/device/lm35dz.cpp
-            src/device/light.cpp)
+            src/device/light.cpp
+            src/device/peltier.cpp)
 target_include_directories(main PRIVATE include)
 target_link_libraries(
     main
