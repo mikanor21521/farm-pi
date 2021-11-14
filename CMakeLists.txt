@@ -16,7 +16,8 @@ target_sources(
             src/device/bme280.cpp
             src/device/mcp3002.cpp
             src/device/tsl2561.cpp
-            src/device/lm35dz.cpp)
+            src/device/lm35dz.cpp
+            src/device/light.cpp)
 target_include_directories(main PRIVATE include)
 target_link_libraries(
     main
