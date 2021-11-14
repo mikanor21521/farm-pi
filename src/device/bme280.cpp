@@ -104,6 +104,7 @@ std::shared_ptr<Bme280> createBme280(
     Bme280::Mode mode, Bme280::StandbyDuration standby, Bme280::Filter filter) {
     static int count = 0;
     std::string logger_name = "bme280";
+    count++;
     return std::make_shared<Bme280>(
         logger->clone(fmt::format("{}-{}", logger_name, count)), spi,
         temp_sampling, pres_sampling, hum_sampling, mode, standby, filter);
