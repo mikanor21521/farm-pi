@@ -13,7 +13,8 @@ target_sources(
             src/driver/pwm.cpp
             src/driver/spi.cpp
             src/driver/i2c.cpp
-            src/device/bme280.cpp)
+            src/device/bme280.cpp
+            src/device/mcp3002.cpp)
 target_include_directories(main PRIVATE include)
 target_link_libraries(
     main
