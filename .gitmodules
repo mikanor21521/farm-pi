@@ -28,3 +28,6 @@
 [submodule "libs/taskflow"]
 	path = libs/taskflow
 	url = https://github.com/taskflow/taskflow
+[submodule "libs/magic_enum"]
+	path = libs/magic_enum
+	url = https://github.com/Neargye/magic_enum

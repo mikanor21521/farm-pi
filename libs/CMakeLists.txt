@@ -137,3 +137,6 @@ target_include_directories(tomlplusplus INTERFACE tomlplusplus/include)
 
 add_library(taskflow INTERFACE)
 target_include_directories(taskflow INTERFACE taskflow)
+
+add_library(magic_enum INTERFACE)
+target_include_directories(magic_enum INTERFACE magic_enum/include)

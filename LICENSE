@@ -46,6 +46,12 @@ The externally maintained libraries used by Observer are:
     licensed as follows:
     https://github.com/nlohmann/json/blob/v3.10.4/LICENSE.MIT
 
+ - magic_enum
+    Located at libs/magic_enum
+    Copyright (c) 2019 - 2021 Daniil Goncharov
+    licensed as follows:
+    https://github.com/Neargye/magic_enum/blob/v0.7.3/LICENSE
+
  - Eclipse Paho MQTT C
     Located at libs/paho.mqtt.c
     licensed as follows:
